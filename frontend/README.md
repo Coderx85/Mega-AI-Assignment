@@ -37,3 +37,27 @@ pnpm run dev
 1. **WebSocket Module**: Responsible for managing the WebSocket connection, sending images to the backend, and receiving detected face data.
 2. **Image Capture Module**: Responsible for capturing images from the user's webcam and converting them to base64 strings for transmission to the backend.
 3. **Rendering Module**: Responsible for rendering the detected face data on the screen using React components, allowing users to visualize the results in real-time.
+
+### File Structure
+```
+frontend/
+├── src/
+│   ├── components/
+│   │   ├── FaceDetectionCanvas.tsx
+│   │   └── WebcamFeed.tsx
+│   ├── hooks/ 
+│   │   ├── useCamera.ts
+│   │   ├── useRenderer.ts
+│   │   ├── useFrameSender.ts 
+│   │   └── useRenderer.ts
+│   ├── types/
+│   │   ├── frame.types.ts
+│   │   └── stream.types.ts
+│   ├── constants/
+│   │   └── stream.ts
+│   ├── App.tsx
+│   └── App.css
+├── package.json
+├── tsconfig.json
+└── README.md
+```

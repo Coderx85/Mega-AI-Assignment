@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { TRoiData, TStats } from '../types';
+import { TRoiData, TStats } from '@types';
 
 type TUrl = string;
 

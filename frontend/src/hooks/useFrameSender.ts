@@ -1,5 +1,5 @@
-import { useRef, useEffect, useCallback } from 'react';
-import { TFrame } from '../types/frame.types';
+import { useRef, useEffect } from 'react';
+import { TFrame } from '@types';
 
 type UseFrameSenderProps = {
   getFrame: () => Promise<TFrame>;

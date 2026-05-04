@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { TFrame, TStream, TVideo, TCanvas } from '../types';
+import { TFrame, TStream, TVideo, TCanvas } from '@types';
 
 type UseCameraProps = {
   width?: number;
