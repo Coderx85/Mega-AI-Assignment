@@ -131,14 +131,28 @@
   font-size: 0.9rem;
 }
 
-.roi-panel {
-  background: #1a1a2e;
-  border-radius: 8px;
-  padding: 16px;
+.roi-section {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 16px;
   margin-bottom: 16px;
 }
 
-.roi-panel h3 {
+@media (max-width: 900px) {
+  .roi-section {
+    grid-template-columns: 1fr;
+  }
+}
+
+.roi-current,
+.roi-history {
+  background: #1a1a2e;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.roi-current h3,
+.roi-history h3 {
   margin: 0 0 12px;
   color: #b0b0b0;
   font-size: 0.95rem;
@@ -146,14 +160,57 @@
   letter-spacing: 0.5px;
 }
 
-.roi-panel pre {
+.roi-json {
   background: #0a0a14;
   padding: 12px;
   border-radius: 4px;
   overflow-x: auto;
   color: #a8d5a2;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   margin: 0;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.roi-empty {
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.error-text {
+  color: #f0a0a0;
+  font-size: 0.85rem;
+}
+
+.roi-table-wrapper {
+  overflow-x: auto;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.roi-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+}
+
+.roi-table th {
+  background: #0a0a14;
+  color: #b0b0b0;
+  padding: 8px 10px;
+  text-align: left;
+  position: sticky;
+  top: 0;
+}
+
+.roi-table td {
+  padding: 6px 10px;
+  color: #e0e0e0;
+  border-bottom: 1px solid #1a1a2e;
+}
+
+.roi-table tr:hover td {
+  background: #16213e;
 }
 
 .stream-controls {
