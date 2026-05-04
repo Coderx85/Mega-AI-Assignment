@@ -1,0 +1,40 @@
+# Python virtual environment
+.venv
+venv/
+env/
+
+# Python cache files
+__pycache__
+**/*.pyc
+*.pyo
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Python tooling caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+
+# Python build artifacts
+build/
+site/
+*.egg-info/
+.eggs/
+
+# Jupyter artifacts
+.ipynb_checkpoints/
+
+# Node.js dependencies
+node_modules/
+dist/
+
+# Editor and OS files
+.DS_Store
+.idea/
+.vscode/

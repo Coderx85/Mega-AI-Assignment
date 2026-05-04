@@ -1,3 +1,6 @@
 fastapi
 uvicorn
-websockets
+pillow
+numpy
+pydantic
+mediapipe
