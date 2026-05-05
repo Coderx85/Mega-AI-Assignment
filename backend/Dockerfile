@@ -1,4 +1,4 @@
-FROM python:3.14-slim
+FROM python:3.14
 
 WORKDIR /app
 
@@ -6,14 +6,20 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     libgl1 \
-    libglib2.0-0 \
-    libgles2-mesa \
-    libegl1-mesa \
+    libglvnd0 \
+    libglvnd-dev \
+    libglx0 \
+    libopengl0 \
     libxkbcommon0 \
     libxkbcommon-x11-0 \
     libxcb1 \
     libx11-6 \
+    libxext6 \
+    libxrender1 \
     && rm -rf /var/lib/apt/lists/*
+
+# Set environment to use CPU for MediaPipe
+ENV MEDIAPIPE_DISABLE_GPU=1
 
 COPY requirements.txt .
 RUN pip install -r requirements.txt

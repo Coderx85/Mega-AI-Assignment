@@ -1,6 +1,13 @@
 fastapi
-uvicorn
+uvicorn[standard]
 pillow
 numpy
 pydantic
 mediapipe
+sqlalchemy[asyncio]>=2.0
+asyncpg
+pydantic-settings
+structlog
+pytest
+pytest-asyncio
+aiosqlite

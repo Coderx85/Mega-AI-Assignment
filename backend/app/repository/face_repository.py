@@ -36,8 +36,8 @@ class FaceRepository:
                         bbox_height=bbox_data["bbox_height"],
                         confidence=detection.confidence,
                         keypoints=[{"x": k.x, "y": k.y, "z": k.z} for k in detection.landmarks] if detection.landmarks else None,
-                        timestamp=datetime.fromisoformat(detection.timestamp),
-                        created_at=datetime.now(UTC),
+                        timestamp=datetime.fromisoformat(detection.timestamp).replace(tzinfo=None),
+                        created_at=datetime.now(UTC).replace(tzinfo=None),
                     )
                     # Add record to session
                     db_session.add(record)

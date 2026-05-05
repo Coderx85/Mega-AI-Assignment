@@ -50,7 +50,9 @@ class FaceDetector:
         self.confidence_threshold = confidence_threshold or self.DEFAULT_CONFIDENCE_THRESHOLD
 
         try:
-            base_options = python.BaseOptions(model_asset_path=self.model_path)
+            base_options = python.BaseOptions(
+                model_asset_path=self.model_path,
+            )
             options = vision.FaceDetectorOptions(
                 base_options=base_options,
                 running_mode=vision.RunningMode.IMAGE,
