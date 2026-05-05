@@ -1,68 +1,77 @@
-import json
-import os
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Dict, List, Optional
 from uuid import uuid4
 
-from app.models.detection import DetectionRecord, FrameAnalysis
+from sqlalchemy import func, select
+import structlog
 
-DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "..", "data")
-DATA_DIR = os.path.abspath(DATA_DIR)
-DETECTIONS_FILE = os.path.join(DATA_DIR, "detections.json")
+from app.database import Database
+from app.models.detection import FrameAnalysis
+from app.models.schema import FaceDetectionRecord
+from app.converters.bbox_converter import BboxConverter
+
+# Initialize logger
+logger = structlog.get_logger(__name__)
 
 class FaceRepository:
-    def __init__(self):
-        self.in_memory: Dict[str, DetectionRecord] = {}
-        os.makedirs(DATA_DIR, exist_ok=True)
-        self._load_from_file()
+    def __init__(self, db: Database):
+        self._db = db
 
-    def _load_from_file(self):
-        if os.path.exists(DETECTIONS_FILE):
-            try:
-                with open(DETECTIONS_FILE, "r") as f:
-                    data = json.load(f)
-                    for d in data:
-                        record = DetectionRecord(**d)
-                        self.in_memory[record.id] = record
-                print(f"[Repo] Loaded {len(self.in_memory)} records")
-            except Exception as e:
-                print(f"[Repo] Error loading: {e}")
+    async def create(self, session_id: str, frame_analysis: FrameAnalysis) -> Optional[FaceDetectionRecord]:
+        records: List[FaceDetectionRecord] = []
+        async with self._db.get_session() as db_session:
+            for detection in frame_analysis.detections:
+                try:
+                    # Validate and convert bbox using converter
+                    bbox_data = BboxConverter.to_orm(detection.bbox)
 
-    def _save_to_file(self):
-        try:
-            records = [json.loads(r.model_dump_json()) for r in self.in_memory.values()]
-            with open(DETECTIONS_FILE, "w") as f:
-                json.dump(records, f, indent=2)
-        except Exception as e:
-            print(f"[Repo] Error saving: {e}")
+                    record = FaceDetectionRecord(
+                        id=str(uuid4()),
+                        session_id=session_id,
+                        frame_id=frame_analysis.frame_id,
+                        face_id=detection.face_id,
+                        bbox_x=bbox_data["bbox_x"],
+                        bbox_y=bbox_data["bbox_y"],
+                        bbox_width=bbox_data["bbox_width"],
+                        bbox_height=bbox_data["bbox_height"],
+                        confidence=detection.confidence,
+                        keypoints=[{"x": k.x, "y": k.y, "z": k.z} for k in detection.landmarks] if detection.landmarks else None,
+                        timestamp=datetime.fromisoformat(detection.timestamp),
+                        created_at=datetime.now(UTC),
+                    )
+                    # Add record to session
+                    db_session.add(record)
 
-    def create(self, session_id: str, frame_analysis: FrameAnalysis) -> DetectionRecord:
-        record = DetectionRecord(
-            id=str(uuid4()),
-            session_id=session_id,
-            frame_analysis=frame_analysis,
-            created_at=datetime.utcnow().isoformat(),
-        )
-        self.in_memory[record.id] = record
-        self._save_to_file()
-        return record
+                    # Append to local list for return value
+                    records.append(record)
+                except ValueError as e:
+                    logger.warning("detection_persistence_failed", error=str(e), face_id=detection.face_id)
+                    continue
+        return records[0] if records else None
 
-    def get_by_id(self, record_id: str) -> Optional[DetectionRecord]:
-        return self.in_memory.get(record_id)
+    async def get_by_id(self, record_id: str) -> Optional[FaceDetectionRecord]:
+        async with self._db.get_session() as db_session:
+            result = await db_session.execute(
+                select(FaceDetectionRecord).where(FaceDetectionRecord.id == record_id)
+            )
+            return result.scalar_one_or_none()
 
-    def get_recent(self, limit: int = 50) -> List[DetectionRecord]:
-        sorted_records = sorted(
-            self.in_memory.values(),
-            key=lambda r: r.created_at,
-            reverse=True,
-        )
-        return sorted_records[:limit]
+    async def get_recent(self, limit: int = 50) -> List[FaceDetectionRecord]:
+        async with self._db.get_session() as db_session:
+            stmt = select(FaceDetectionRecord).order_by(FaceDetectionRecord.created_at.desc()).limit(limit)
+            result = await db_session.execute(stmt)
+            return list(result.scalars().all())
 
-    def get_stats(self) -> Dict:
-        total_faces = sum(r.frame_analysis.faces_count for r in self.in_memory.values())
-        sessions = set(r.session_id for r in self.in_memory.values())
-        return {
-            "total_records": len(self.in_memory),
-            "total_faces_detected": total_faces,
-            "unique_sessions": len(sessions),
-        }
+    async def get_stats(self) -> Dict:
+        async with self._db.get_session() as db_session:
+            total_records = await db_session.execute(select(func.count(FaceDetectionRecord.id)))
+            total_faces = total_records.scalar() or 0
+
+            sessions = await db_session.execute(select(func.count(func.distinct(FaceDetectionRecord.session_id))))
+            unique_sessions = sessions.scalar() or 0
+
+            return {
+                "total_records": total_faces,
+                "total_faces_detected": total_faces,
+                "unique_sessions": unique_sessions,
+            }

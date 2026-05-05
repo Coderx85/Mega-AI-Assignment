@@ -1,1 +1,1 @@
-"""Face detection models."""
+from app.services.frame_cache import FrameCache
