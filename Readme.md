@@ -34,6 +34,20 @@ Backend (FastAPI)
 - Node.js 22+
 - Camera access
 
+## Running the Application (using Docker)
+
+1. Build and run the full stack:
+
+```bash
+docker-compose up --build
+```
+
+2. Access the application:
+- Frontend: `http://localhost:5173`
+- Backend: `http://localhost:8000`
+- WebSocket: `ws://localhost:8000/ws/video`
+
+
 ### Local Development (Recommended)
 
 **Backend - Terminal 1:**
