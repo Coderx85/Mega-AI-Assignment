@@ -35,8 +35,10 @@ function VideoStream() {
         const res = await fetch(`${Default.ROI_URL}?limit=50`);
         if (res.ok) {
           const data = await res.json();
-          setRoiRecords(data.records);
+          setRoiRecords(data.records || []);
           setRoiError(null);
+        } else {
+          setRoiError(`HTTP ${res.status}`);
         }
       } catch (err: unknown) {
         console.error('Failed to fetch ROI data:', err);
@@ -172,24 +174,23 @@ function VideoStream() {
                   <th>Time</th>
                 </tr>
               </thead>
-              <tbody>
-                {roiRecords.map((record: any) => {
-                  const d = record?.frame_analysis?.detections?.[0];
-                  return (
-                    <tr key={record.id}>
-                      <td>{record.frame_analysis.frame_id}</td>
-                      <td>{record.frame_analysis.faces_count}</td>
-                      <td>{d ? d.confidence.toFixed(2) : '-'}</td>
-                      <td>
-                        {d
-                          ? `${d.bbox.x},${d.bbox.y},${d.bbox.width},${d.bbox.height}`
-                          : '-'}
-                      </td>
-                      <td>{new Date(record.created_at).toLocaleTimeString()}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
+               <tbody>
+                 {roiRecords.map((record: any) => {
+                   return (
+                     <tr key={record.id}>
+                       <td>{record.frame_id}</td>
+                       <td>1</td>
+                       <td>{record.confidence ? record.confidence.toFixed(2) : '-'}</td>
+                       <td>
+                         {record.bbox
+                           ? `${record.bbox.x},${record.bbox.y},${record.bbox.width},${record.bbox.height}`
+                           : '-'}
+                       </td>
+                       <td>{new Date(record.created_at).toLocaleTimeString()}</td>
+                     </tr>
+                   );
+                 })}
+               </tbody>
             </table>
           </div>
         </div>
