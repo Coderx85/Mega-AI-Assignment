@@ -373,6 +373,32 @@ export const FRAME_HEIGHT = 120;  // Default 240
 
 ## Troubleshooting
 
+### Issue: Docker Backend Fails - "libGLESv2.so.2: cannot open shared object file"
+
+**Symptom:**
+```
+RuntimeError: Failed to initialize FaceDetector: libGLESv2.so.2: cannot open shared object file
+```
+
+**Cause:**
+MediaPipe requires OpenGL ES libraries which weren't included in the Docker image.
+
+**Solution:**
+The Dockerfile has been updated with required graphics libraries:
+```dockerfile
+RUN apt-get install -y --no-install-recommends \
+    libgles2-mesa \
+    libegl1-mesa \
+    libxkbcommon0 \
+    libxkbcommon-x11-0 \
+    libxcb1 \
+    libx11-6
+```
+
+**How to fix:**
+1. Delete old Docker image: `docker rmi mega-ai-backend:latest`
+2. Rebuild: `docker-compose up --build`
+
 ### Issue: "ModuleNotFoundError: No module named 'app'"
 
 **Solution:**
