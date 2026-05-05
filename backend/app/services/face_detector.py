@@ -4,6 +4,7 @@ Face detection service using MediaPipe.
 Detects faces in frames and returns FaceDetection objects with ROI and landmarks.
 """
 
+import os
 from datetime import datetime, UTC
 from typing import List
 
@@ -22,7 +23,11 @@ logger = structlog.get_logger(__name__)
 class FaceDetector:
     """Detects faces in frames using MediaPipe."""
 
-    DEFAULT_MODEL_PATH = "backend/models/blaze_face_short_range.tflite"
+    DEFAULT_MODEL_PATH = os.path.join(
+        os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
+        "models",
+        "blaze_face_short_range.tflite",
+    )
     DEFAULT_CONFIDENCE_THRESHOLD = 0.5
 
     def __init__(
