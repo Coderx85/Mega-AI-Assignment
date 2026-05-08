@@ -95,7 +95,7 @@ Client                          Backend
    Contains: Original frame with drawn bounding boxes
    ```
 
-2. **Text Frame:** Frame Analysis JSON
+2. **Text Frame:** Frame Analysis JSON ⚠️ (Currently ignored by frontend)
    ```json
    {
      "frame_id": 42,
@@ -119,6 +119,7 @@ Client                          Backend
      ]
    }
    ```
+   **Note:** Frontend currently does NOT process these text frames. Detection metadata is instead fetched via HTTP polling of `/roi` endpoint every 2 seconds (see Known Implementation Gaps below).
 
 ---
 
@@ -161,7 +162,7 @@ GET http://localhost:8000/roi?limit=50
 
 ---
 
-### 3. **HTTP GET: `/feed`**
+### 3. **HTTP GET: `/feed`** (MJPEG Stream)
 
 **Purpose:** MJPEG stream for viewing processed video feed  
 **Query Parameters:**
@@ -192,6 +193,8 @@ This is the standard MJPEG format that can be displayed in an `<img>` tag:
 ```html
 <img src="http://localhost:8000/feed" alt="Processed video feed" />
 ```
+
+**Frontend Usage:** The frontend displays the processed video stream using this endpoint directly (not via WebSocket), which provides a clean continuous stream of annotated frames.
 
 ---
 
@@ -264,6 +267,11 @@ GET http://localhost:8000/
 - Throttles frame capture to prevent backlog
 - Stops when WebSocket disconnects
 
+#### **useRenderer() Hook** ⚠️ (Dead Code)
+- Exists in [src/hooks/useRenderer.ts](frontend/src/hooks/useRenderer.ts) but is **not used** in VideoStream.tsx
+- Originally intended for frame rendering and ROI visualization
+- Currently unused - consider removing or refactoring for future use
+
 ---
 
 ## Sequence Diagram: Full Video Streaming Flow
@@ -304,11 +312,14 @@ Frontend                        Backend
    │ Receive detection metadata   │
    │                              │
    │   4. Poll ROI endpoint       │
+   │   (Every 2 seconds)          │
    ├─── GET /roi?limit=50 ──────>│
    │                              │
    │<── Recent detections JSON ──┤
    │ Update detection history    │
    │ table with latest faces     │
+   │ (Note: WebSocket text JSON  │
+   │ frames are NOT processed)   │
    │                              │
    │   5. Loop until stopped     │
    │                              │
@@ -538,20 +549,27 @@ npm run dev
 ## Technologies
 
 - **Frontend:** React, TypeScript, Vite
-- **Backend:** FastAPI, SQLAlchemy, asyncio
-- **Database:** SQLite (development) / PostgreSQL (production)
+- **Backend:** FastAPI, SQLAlchemy, MediaPipe, Pillow
+- **Database:** PostgreSQL (using docker-compose)
 - **Detection:** MediaPipe FaceDetection
 - **Logging:** structlog (JSON structured logs)
 - **Serialization:** Pydantic, BboxConverter
 
 ---
 
-## Future Enhancements
+## Known Implementation Gaps
 
-- [ ] Cross-frame face tracking (Face ID persistence)
-- [ ] Face recognition/identification
-- [ ] Recording video with overlays
-- [ ] Real-time metrics dashboard
-- [ ] Multiple concurrent streams
-- [ ] GPU acceleration support
-- [ ] Configurable confidence threshold via UI
+### Current Limitations
+
+| Gap | Impact | Workaround | Status |
+|-----|--------|-----------|--------|
+| **WebSocket text frames ignored** | Frontend doesn't process real-time JSON analysis from WebSocket | Uses HTTP polling (`/roi`) every 2s instead - adds latency | 🟡 Medium |
+| **useRenderer() dead code** | Unused hook in codebase, indicates incomplete refactoring | Currently unused but present in `src/hooks/useRenderer.ts` | 🟡 Medium |
+| **MJPEG from HTTP not WebSocket** | Processed video comes from separate HTTP endpoint instead of WebSocket stream | Works but separates video stream from frame metadata | 🟠 Low |
+| **No real-time frame analysis** | Detection metadata arrives via polling, not streaming | ~2s latency before seeing new detections in UI | 🟡 Medium |
+
+### Recommended Improvements
+
+1. **Process WebSocket text frames:** Update [useWebSocket.ts](frontend/src/hooks/useWebSocket.ts) and VideoStream.tsx to handle JSON analysis frames in real-time
+2. **Remove dead code:** Delete or repurpose [useRenderer.ts](frontend/src/hooks/useRenderer.ts)
+3. **Consolidate frame data:** Route both JPEG and analysis metadata through WebSocket instead of split HTTP/WS
